@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useRef } from "react";
+import { motion, useSpring, useMotionValue, useTransform } from "framer-motion";
 
 interface HeaderProps {
   darkMode: boolean;
@@ -13,113 +14,158 @@ interface HeaderProps {
   setAnimationsEnabled: (v: boolean) => void;
 }
 
-const Toggle = ({
-  label,
-  value,
-  onChange,
+const DockItem = ({
+  children,
+  mouseX,
+  enabled,
 }: {
-  label: string;
-  value: boolean;
-  onChange: () => void;
-}) => (
-  <button
-    onClick={onChange}
-    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border
-      transition-all duration-200 group
-      ${
-        value
-          ? "bg-violet-600 text-white border-violet-600 shadow-sm"
-          : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-violet-300"
-      }
-    `}
-  >
-    <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+  children: React.ReactNode;
+  mouseX: any;
+  enabled: boolean;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const distance = useTransform(mouseX, (val: number) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return val - bounds.x - bounds.width / 2;
+  });
+
+  // Reduced scale to 1.2x and increased distance threshold to prevent collisions
+  const scaleSync = useTransform(distance, [-120, 0, 120], [1, 1.2, 1]);
+  const ySync = useTransform(distance, [-120, 0, 120], [0, -8, 0]);
+
+  const scale = useSpring(scaleSync, {
+    stiffness: 200,
+    damping: 20,
+    mass: 0.1,
+  });
+  const y = useSpring(ySync, { stiffness: 200, damping: 20, mass: 0.1 });
+
+  return (
+    /* WIDER CONTAINER (w-[84px]): 
+       This acts as a "buffer zone" so that even when a card scales up, 
+       it stays within its own invisible box and never touches the neighbor.
+    */
     <div
-      className={`w-8 h-4 flex items-center rounded-full p-0.5 transition-all
-        ${value ? "bg-white/30" : "bg-gray-200 dark:bg-gray-700"}
+      ref={ref}
+      className="relative w-[84px] h-[60px] flex items-center justify-center flex-shrink-0"
+    >
+      <motion.div
+        style={enabled ? { scale, y, position: "absolute" } : {}}
+        className="flex items-center justify-center origin-bottom z-10"
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+};
+
+const Toggle = ({ label, value, onChange, mouseX, enabled }: any) => (
+  <DockItem mouseX={mouseX} enabled={enabled}>
+    <button
+      onClick={onChange}
+      className={`flex flex-col items-center justify-center gap-1.5 w-[64px] h-[50px] rounded-2xl border transition-all duration-300
+        ${
+          value
+            ? "bg-violet-600 text-white border-violet-500 shadow-lg shadow-violet-500/20"
+            : "bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-gray-800 text-gray-500 hover:border-violet-400"
+        }
       `}
     >
+      <span className="text-[9px] font-black uppercase tracking-tighter leading-none">
+        {label}
+      </span>
       <div
-        className={`h-3 w-3 rounded-full bg-white shadow-sm transition-transform
-          ${value ? "translate-x-4" : "translate-x-0"}
-        `}
-      />
-    </div>
-  </button>
+        className={`w-6 h-3 flex items-center rounded-full p-0.5 ${value ? "bg-white/30" : "bg-gray-200 dark:bg-gray-700"}`}
+      >
+        <motion.div
+          animate={{ x: value ? 12 : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          className="h-2 w-2 rounded-full bg-white shadow-sm"
+        />
+      </div>
+    </button>
+  </DockItem>
 );
 
-const Header: React.FC<HeaderProps> = ({
-  darkMode,
-  setDarkMode,
-  highContrast,
-  setHighContrast,
-  showCharts,
-  setShowCharts,
-  compactLayout,
-  setCompactLayout,
-  animationsEnabled,
-  setAnimationsEnabled,
-}) => {
+const Header: React.FC<HeaderProps> = (props) => {
+  const mouseX = useMotionValue(Infinity);
+
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-white/90 dark:bg-black/90 border-b border-gray-200 dark:border-gray-800">
-      {/* Container matches the max-w-[1600px] from App.tsx */}
-      <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
-        {/* Branding Area */}
-        <div className="flex items-center gap-3">
-          <div className="bg-violet-600 p-2 rounded-lg">
+    <header
+      onMouseMove={(e) => mouseX.set(e.pageX)}
+      onMouseLeave={() => mouseX.set(Infinity)}
+      className="sticky top-0 z-50 bg-white/90 dark:bg-black/95 border-b border-gray-200 dark:border-gray-800 h-[80px]"
+    >
+      <div className="max-w-[1600px] mx-auto px-6 h-full flex items-center justify-between">
+        {/* Logo Section */}
+        <div className="flex items-center gap-3 w-[220px]">
+          <div className="bg-violet-600 p-2 rounded-xl shadow-lg shadow-violet-600/20">
             <span className="text-xl">📊</span>
           </div>
           <div>
-            <h1 className="text-lg font-black tracking-tighter text-gray-900 dark:text-white uppercase">
-              Genre
-              <span className="text-violet-600 underline decoration-2 underline-offset-4">
-                Lab
-              </span>
+            <h1 className="text-lg font-black dark:text-white uppercase leading-none">
+              Genre<span className="text-violet-600">Lab</span>
             </h1>
-            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] leading-none mt-1">
+            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">
               AI Classification Engine
             </p>
           </div>
         </div>
 
-        {/* Toggles Area - Now Horizontal for better space usage */}
-        <div className="hidden lg:flex items-center gap-3">
-          <div className="flex gap-2 border-r border-gray-200 dark:border-gray-800 pr-4 mr-2">
+        {/* The Dock Bar */}
+        <div className="hidden lg:flex items-center px-2 bg-gray-100/40 dark:bg-gray-900/40 rounded-[28px] border border-gray-200 dark:border-gray-800/60 h-[68px] backdrop-blur-md">
+          <div className="flex items-center">
             <Toggle
               label="Dark"
-              value={darkMode}
-              onChange={() => setDarkMode(!darkMode)}
+              value={props.darkMode}
+              mouseX={mouseX}
+              enabled={props.animationsEnabled}
+              onChange={() => props.setDarkMode(!props.darkMode)}
             />
             <Toggle
               label="Contrast"
-              value={highContrast}
-              onChange={() => setHighContrast(!highContrast)}
+              value={props.highContrast}
+              mouseX={mouseX}
+              enabled={props.animationsEnabled}
+              onChange={() => props.setHighContrast(!props.highContrast)}
             />
           </div>
-          <div className="flex gap-2">
+
+          <div className="w-[1px] h-8 bg-gray-300 dark:bg-gray-800 mx-1 rounded-full opacity-40" />
+
+          <div className="flex items-center">
             <Toggle
               label="Charts"
-              value={showCharts}
-              onChange={() => setShowCharts(!showCharts)}
+              value={props.showCharts}
+              mouseX={mouseX}
+              enabled={props.animationsEnabled}
+              onChange={() => props.setShowCharts(!props.showCharts)}
             />
             <Toggle
               label="Compact"
-              value={compactLayout}
-              onChange={() => setCompactLayout(!compactLayout)}
+              value={props.compactLayout}
+              mouseX={mouseX}
+              enabled={props.animationsEnabled}
+              onChange={() => props.setCompactLayout(!props.compactLayout)}
             />
             <Toggle
               label="Motion"
-              value={animationsEnabled}
-              onChange={() => setAnimationsEnabled(!animationsEnabled)}
+              value={props.animationsEnabled}
+              mouseX={mouseX}
+              enabled={props.animationsEnabled}
+              onChange={() =>
+                props.setAnimationsEnabled(!props.animationsEnabled)
+              }
             />
           </div>
         </div>
 
-        {/* Mobile View - Just a settings icon or simplified text for now */}
-        <div className="lg:hidden flex items-center">
-          <span className="text-xs font-bold text-violet-600 bg-violet-50 dark:bg-violet-900/30 px-2 py-1 rounded">
-            V1.0 Stable
-          </span>
+        {/* System Info */}
+        <div className="w-[220px] flex justify-end">
+          <div className="text-[10px] font-black text-violet-600/80 bg-violet-500/10 px-4 py-1.5 rounded-full border border-violet-500/20 uppercase tracking-widest">
+            v1.0.4 stable
+          </div>
         </div>
       </div>
     </header>

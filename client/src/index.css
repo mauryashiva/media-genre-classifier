@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Global smooth transitions */
 html {
   transition:
@@ -16,4 +18,48 @@ body {
 /* High contrast mode */
 html.high-contrast {
   filter: contrast(1.15) saturate(1.1);
+}
+
+/* Update your index.css to respect the animationsEnabled state if you use raw CSS */
+.motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Next-Level Glassmorphism Scrollbar */
+.custom-scrollbar {
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.1) transparent;
+}
+
+/* Chrome, Safari and Opera */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px; /* Ultra thin */
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  /* Semi-transparent violet with a glass blur feel */
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+/* On Hover: The scrollbar "wakes up" */
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(139, 92, 246, 0.8);
 }

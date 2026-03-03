@@ -355,6 +355,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         storageUsage={storageUsage}
+        animationsEnabled={animationsEnabled}
       />
 
       <main className="flex-1 p-4 lg:p-8">
