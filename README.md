@@ -41,7 +41,8 @@ cd server
 python -m venv venv
 
 # Windows
-source venv/Scripts/activate
+.\venv\Scripts\Activate
+
 # Linux/Mac
 source venv/bin/activate
 
@@ -184,10 +185,14 @@ pip install -r requirements_training.txt
 
 ## 📜 License
 
-MIT License
+This project is licensed under the **MIT License**.
+
 Copyright (c) 2026 Shiva Maurya
 
-👨‍💻 Author
+---
 
-Shiva Maurya
+## 👨‍💻 Author
+
+**Shiva Maurya**
+
 GenreLab — AI Media Classification Engine
